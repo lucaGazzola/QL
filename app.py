@@ -11,17 +11,52 @@ def main():
     engine = init_engine(model_path)
     print("Engine ready.")
 
-    def chat_fn(message, history):
-        history_dicts = []
-        for msg in history:
-            history_dicts.append({"role": msg["role"], "content": msg["content"]})
-        yield from generate(engine, message, history_dicts)
+    def respond(message, history, show_thinking):
+        if not message.strip():
+            yield history, "", ""
+            return
 
-    demo = gr.ChatInterface(
-        fn=chat_fn,
-        title="Local Chatbot",
-        description="A local chatbot powered by Qwen-AgentWorld-35B",
-    )
+        history = history + [
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": ""},
+        ]
+
+        llm_history = [{"role": h["role"], "content": h["content"]} for h in history[:-2]]
+
+        for thinking, answer, in_thinking, thinking_done in generate(
+            engine, message, llm_history
+        ):
+            if in_thinking:
+                bot_msg = "⏳ Thinking..."
+            else:
+                bot_msg = answer if answer else "..."
+
+            yield history[:-1] + [{"role": "assistant", "content": bot_msg}], "", thinking
+
+        final_answer = answer if answer else "No response generated."
+        yield history[:-1] + [{"role": "assistant", "content": final_answer}], "", thinking
+
+    MODEL_URL = "https://huggingface.co/unsloth/Qwen-AgentWorld-35B-A3B-GGUF"
+
+    with gr.Blocks(title="Local Chatbot") as demo:
+        gr.Markdown(f"# QL\na local chatbot powered by [Qwen-AgentWorld-35B]({MODEL_URL})")
+
+        with gr.Row():
+            with gr.Column(scale=3):
+                chatbot = gr.Chatbot(height=500)
+            with gr.Column(scale=1, visible=False) as thinking_col:
+                thinking_display = gr.Markdown(label="Thinking Process", height=500)
+
+        with gr.Row():
+            msg = gr.Textbox(placeholder="Type your message...", scale=4, show_label=False)
+            submit = gr.Button("Send", scale=1)
+
+        show_thinking = gr.Checkbox(label="Show thinking process", value=False)
+
+        show_thinking.change(lambda show: gr.update(visible=show), [show_thinking], [thinking_col])
+
+        msg.submit(respond, [msg, chatbot, show_thinking], [chatbot, msg, thinking_display])
+        submit.click(respond, [msg, chatbot, show_thinking], [chatbot, msg, thinking_display])
 
     print("Launching browser...")
     demo.launch(inbrowser=True)
