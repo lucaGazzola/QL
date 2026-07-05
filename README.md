@@ -1,6 +1,6 @@
 # QL - Local Chatbot
 
-A self-contained, one-click local chatbot powered by Qwen-AgentWorld-35B. Downloads the model automatically on first run, runs entirely on your machine with no cloud APIs.
+A self-contained, one-click local chatbot powered by Qwen3.6-27B. Downloads the model automatically on first run, runs entirely on your machine with no cloud APIs.
 
 ## Requirements
 
@@ -34,8 +34,8 @@ A browser window opens automatically with the chat interface.
 
 ## Model
 
-- **Repo:** unsloth/Qwen-AgentWorld-35B-A3B-GGUF
-- **Quantization:** UD-IQ2_XXS (fits within 32GB RAM with room for 8k context)
+- **Repo:** unsloth/Qwen3.6-27B-MTP-GGUF
+- **Quantization:** Q3_K_S (fits within 32GB RAM with room for 8k context)
 
 ## Tech Stack
 

@@ -59,10 +59,10 @@ def main():
         final_answer = answer if answer else "No response generated."
         yield history[:-1] + [{"role": "assistant", "content": final_answer}], "", thinking
 
-    MODEL_URL = "https://huggingface.co/unsloth/Qwen-AgentWorld-35B-A3B-GGUF"
+    MODEL_URL = "https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF"
 
     with gr.Blocks(title="Local Chatbot") as demo:
-        gr.Markdown(f"# QL\na local chatbot powered by [Qwen-AgentWorld-35B]({MODEL_URL})")
+        gr.Markdown(f"# QL\na local chatbot powered by [Qwen3.6-27B]({MODEL_URL})")
 
         with gr.Row():
             with gr.Column(scale=3):
