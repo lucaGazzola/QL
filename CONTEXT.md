@@ -1,6 +1,6 @@
 # QL - Local Chatbot
 
-A local chatbot powered by Qwen3.6-27B using llama.cpp.
+A local chatbot powered by Qwen3.5-4B using llama.cpp.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ A local chatbot powered by Qwen3.6-27B using llama.cpp.
 
 ## Key Details
 
-- **Model**: `unsloth/Qwen3.6-27B-MTP-GGUF` (Q3_K_S quantization)
+- **Model**: `unsloth/Qwen3.5-4B-GGUF` (Q4_K_XL quantization)
 - **Prompt format**: ChatML (im_start/im_end tokens)
 - **UI**: Gradio 3.41.2 Blocks with chatbot (messages format), thinking panel, and toggle checkbox
 - **Streaming**: Yields (thinking, answer, in_thinking, thinking_done) tuples

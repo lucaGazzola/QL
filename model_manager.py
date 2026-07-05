@@ -1,8 +1,8 @@
 import os
 from huggingface_hub import hf_hub_download
 
-MODEL_REPO = "unsloth/Qwen3.6-27B-MTP-GGUF"
-MODEL_FILENAME = "Qwen3.6-27B-Q3_K_S.gguf"
+MODEL_REPO = "unsloth/Qwen3.5-4B-GGUF"
+MODEL_FILENAME = "Qwen3.5-4B-UD-Q4_K_XL.gguf"
 MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 
 

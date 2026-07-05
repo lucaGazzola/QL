@@ -1,11 +1,11 @@
 # QL - Local Chatbot
 
-A self-contained, one-click local chatbot powered by Qwen3.6-27B. Downloads the model automatically on first run, runs entirely on your machine with no cloud APIs.
+A self-contained, one-click local chatbot powered by Qwen3.5-4B. Downloads the model automatically on first run, runs entirely on your machine with no cloud APIs.
 
 ## Requirements
 
 - Python 3.10+
-- 32GB unified memory (Apple Silicon or equivalent)
+- 8GB unified memory (Apple Silicon or equivalent)
 - Metal-capable GPU (Mac) or CUDA GPU (Windows/Linux)
 
 ## Run
@@ -20,7 +20,7 @@ A self-contained, one-click local chatbot powered by Qwen3.6-27B. Downloads the 
 start.bat
 ```
 
-The first run creates a virtual environment, installs dependencies (including compiling llama-cpp-python with GPU support), and downloads the model (~6GB). Subsequent launches are instant.
+The first run creates a virtual environment, installs dependencies (including compiling llama-cpp-python with GPU support), and downloads the model (~3GB). Subsequent launches are instant.
 
 A browser window opens automatically with the chat interface.
 
@@ -34,8 +34,8 @@ A browser window opens automatically with the chat interface.
 
 ## Model
 
-- **Repo:** unsloth/Qwen3.6-27B-MTP-GGUF
-- **Quantization:** Q3_K_S (fits within 32GB RAM with room for 8k context)
+- **Repo:** unsloth/Qwen3.5-4B-GGUF
+- **Quantization:** Q4_K_XL (fits within 8GB RAM with room for 8k context)
 
 ## Tech Stack
 
