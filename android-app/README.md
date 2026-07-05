@@ -6,19 +6,28 @@ A minimal Android chatbot powered by Qwen3.5-4B using llama.cpp.
 
 - Simple chat interface
 - Automatic model download on first launch
-- Local inference (no internet required after initial download)
+- Local inference using llama.cpp (no internet required after initial download)
+- Real-time token generation
 
 ## Requirements
 
 - Android 8.0 (API 26) or higher
 - ~3GB free storage for model file
 - 6GB+ RAM recommended
+- Android Studio with NDK support
 
-## Building
+## Quick Start
 
-1. Open `android-app/` in Android Studio
-2. Sync Gradle
-3. Build and run on device or emulator
+1. Run the setup script to download llama.cpp:
+   ```bash
+   ./setup-llama.sh
+   ```
+
+2. Open `android-app/` in Android Studio
+
+3. Sync Gradle and build
+
+4. Run on device or emulator
 
 ## Model
 
@@ -33,10 +42,30 @@ The model (~2.5GB) is downloaded automatically on first launch.
 - **ChatViewModel** - Manages chat state
 - **ChatScreen** - Jetpack Compose UI
 
-## Current Status
+## How It Works
 
-- [x] Project setup
-- [x] JNI bindings (placeholder)
-- [x] Model download
-- [x] Chat UI
-- [ ] Full llama.cpp integration
+1. **First Launch**: App downloads the GGUF model from HuggingFace (~2.5GB)
+2. **Model Loading**: llama.cpp loads the model into memory (takes 10-30 seconds)
+3. **Chat**: User types messages, model generates responses locally
+
+## Troubleshooting
+
+### "Engine not initialized" error
+- Ensure llama.cpp was downloaded via `./setup-llama.sh`
+- Check that your device has enough RAM (6GB+ recommended)
+
+### Slow performance
+- First inference is slower as the model loads
+- Subsequent messages should be faster
+
+### Build fails
+- Ensure Android Studio has NDK installed
+- Check that CMake 3.22.1+ is available
+
+## Development
+
+The app uses a hybrid approach:
+- If llama.cpp source is present, it builds and links against it
+- If not, it runs in placeholder mode with dummy responses
+
+This allows development without the full llama.cpp build, but you need the real library for actual inference.
