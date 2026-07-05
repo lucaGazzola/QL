@@ -23,8 +23,8 @@ class ChatViewModel : ViewModel() {
     private var engine: LlamaEngine? = null
     private var modelManager: ModelManager? = null
 
-    fun initEngine(modelPath: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+    suspend fun initEngine(modelPath: String) {
+        withContext(Dispatchers.IO) {
             val eng = LlamaEngine()
             eng.init(modelPath)
             engine = eng
