@@ -11,17 +11,40 @@ def main():
     engine = init_engine(model_path)
     print("Engine ready.")
 
+    def get_content(msg):
+        if isinstance(msg, dict):
+            content = msg.get("content", "")
+            if isinstance(content, list):
+                texts = [item.get("text", "") if isinstance(item, dict) else str(item) for item in content]
+                return " ".join(texts)
+            return content
+        if hasattr(msg, "text"):
+            return msg.text
+        return str(msg)
+
+    def get_role(msg):
+        if isinstance(msg, dict):
+            return msg.get("role", "user")
+        if hasattr(msg, "role"):
+            return msg.role
+        return "user"
+
     def respond(message, history, show_thinking):
         if not message.strip():
             yield history, "", ""
             return
 
-        history = history + [
-            {"role": "user", "content": message},
-            {"role": "assistant", "content": ""},
-        ]
+        # Check if the last message in history is already the current user message
+        if history and get_role(history[-1]) == "user" and get_content(history[-1]) == message:
+            # History already contains this message, just add assistant placeholder
+            history = history + [{"role": "assistant", "content": ""}]
+        else:
+            history = history + [
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": ""},
+            ]
 
-        llm_history = [{"role": h["role"], "content": h["content"]} for h in history[:-2]]
+        llm_history = [{"role": get_role(h), "content": get_content(h)} for h in history[:-2]]
 
         for thinking, answer, in_thinking, thinking_done in generate(
             engine, message, llm_history
