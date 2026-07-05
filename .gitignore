@@ -2,3 +2,7 @@
 __pycache__/
 instructions.txt
 models/
+android-app/.gradle/
+android-app/.idea/
+android-app/build/
+android-app/local.properties
