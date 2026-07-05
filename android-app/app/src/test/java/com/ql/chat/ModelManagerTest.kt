@@ -29,6 +29,16 @@ class ModelManagerTest {
     }
 
     @Test
+    fun `modelExists returns false when download in progress`() {
+        val modelFile = File(tempDir, ModelManager.MODEL_FILENAME)
+        val tempFile = File(tempDir, ModelManager.MODEL_FILENAME + ".downloading")
+        modelFile.createNewFile()
+        tempFile.createNewFile()
+        val manager = ModelManager(tempDir)
+        assertFalse(manager.modelExists())
+    }
+
+    @Test
     fun `getModelPath returns correct path`() {
         val manager = ModelManager(tempDir)
         val expected = File(tempDir, ModelManager.MODEL_FILENAME).absolutePath
@@ -40,5 +50,50 @@ class ModelManagerTest {
         val manager = ModelManager(tempDir)
         assertTrue(manager.getModelUrl().contains("huggingface.co"))
         assertTrue(manager.getModelUrl().contains(ModelManager.MODEL_FILENAME))
+    }
+
+    @Test
+    fun `getDownloadState returns NOT_STARTED when no files`() {
+        val manager = ModelManager(tempDir)
+        assertEquals(ModelManager.DownloadState.NOT_STARTED, manager.getDownloadState())
+    }
+
+    @Test
+    fun `getDownloadState returns COMPLETE when model exists`() {
+        val modelFile = File(tempDir, ModelManager.MODEL_FILENAME)
+        modelFile.createNewFile()
+        val manager = ModelManager(tempDir)
+        assertEquals(ModelManager.DownloadState.COMPLETE, manager.getDownloadState())
+    }
+
+    @Test
+    fun `getDownloadState returns IN_PROGRESS when temp file exists`() {
+        val tempFile = File(tempDir, ModelManager.MODEL_FILENAME + ".downloading")
+        tempFile.createNewFile()
+        val manager = ModelManager(tempDir)
+        assertEquals(ModelManager.DownloadState.IN_PROGRESS, manager.getDownloadState())
+    }
+
+    @Test
+    fun `getModelSizeMB returns 0 when model not present`() {
+        val manager = ModelManager(tempDir)
+        assertEquals(0, manager.getModelSizeMB())
+    }
+
+    @Test
+    fun `getModelSizeMB returns correct size`() {
+        val modelFile = File(tempDir, ModelManager.MODEL_FILENAME)
+        modelFile.writeBytes(ByteArray(1024 * 1024 * 10)) // 10 MB
+        val manager = ModelManager(tempDir)
+        assertEquals(10, manager.getModelSizeMB())
+    }
+
+    @Test
+    fun `deleteModel removes model file`() {
+        val modelFile = File(tempDir, ModelManager.MODEL_FILENAME)
+        modelFile.createNewFile()
+        val manager = ModelManager(tempDir)
+        assertTrue(manager.deleteModel())
+        assertFalse(modelFile.exists())
     }
 }

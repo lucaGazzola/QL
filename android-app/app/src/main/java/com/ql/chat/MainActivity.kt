@@ -4,18 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ql.chat.ui.ChatScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.DecimalFormat
 
 class MainActivity : ComponentActivity() {
 
@@ -28,29 +29,60 @@ class MainActivity : ComponentActivity() {
         val modelManager = ModelManager(modelsDir)
 
         setContent {
-            val context = LocalContext.current
             val scope = rememberCoroutineScope()
             var isDownloading by remember { mutableStateOf(false) }
             var downloadProgress by remember { mutableIntStateOf(0) }
+            var bytesDownloaded by remember { mutableLongStateOf(0L) }
+            var totalBytes by remember { mutableLongStateOf(0L) }
             var downloadError by remember { mutableStateOf<String?>(null) }
+            var isLoadingModel by remember { mutableStateOf(false) }
 
-            LaunchedEffect(Unit) {
-                if (!modelManager.modelExists()) {
+            fun startDownload() {
+                downloadError = null
+                scope.launch {
                     isDownloading = true
                     try {
                         withContext(Dispatchers.IO) {
-                            modelManager.downloadModel { progress ->
+                            modelManager.downloadModel { progress, downloaded, total ->
                                 downloadProgress = progress
+                                bytesDownloaded = downloaded
+                                totalBytes = total
                             }
                         }
-                        viewModel.initEngine(modelManager.getModelPath())
+                        // Model downloaded, now load it
+                        isLoadingModel = true
+                        withContext(Dispatchers.IO) {
+                            viewModel.initEngine(modelManager.getModelPath())
+                        }
                     } catch (e: Exception) {
                         downloadError = e.message
                     } finally {
                         isDownloading = false
+                        isLoadingModel = false
                     }
-                } else {
-                    viewModel.initEngine(modelManager.getModelPath())
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                when (modelManager.getDownloadState()) {
+                    ModelManager.DownloadState.COMPLETE -> {
+                        isLoadingModel = true
+                        try {
+                            withContext(Dispatchers.IO) {
+                                viewModel.initEngine(modelManager.getModelPath())
+                            }
+                        } catch (e: Exception) {
+                            downloadError = "Failed to load model: ${e.message}"
+                        } finally {
+                            isLoadingModel = false
+                        }
+                    }
+                    ModelManager.DownloadState.IN_PROGRESS -> {
+                        startDownload()
+                    }
+                    ModelManager.DownloadState.NOT_STARTED -> {
+                        startDownload()
+                    }
                 }
             }
 
@@ -58,29 +90,19 @@ class MainActivity : ComponentActivity() {
                 Surface {
                     when {
                         isDownloading -> {
-                            DownloadScreen(progress = downloadProgress)
+                            DownloadScreen(
+                                progress = downloadProgress,
+                                bytesDownloaded = bytesDownloaded,
+                                totalBytes = totalBytes
+                            )
+                        }
+                        isLoadingModel -> {
+                            LoadingModelScreen()
                         }
                         downloadError != null -> {
                             ErrorScreen(
                                 message = downloadError ?: "Unknown error",
-                                onRetry = {
-                                    downloadError = null
-                                    scope.launch {
-                                        isDownloading = true
-                                        try {
-                                            withContext(Dispatchers.IO) {
-                                                modelManager.downloadModel { progress ->
-                                                    downloadProgress = progress
-                                                }
-                                            }
-                                            viewModel.initEngine(modelManager.getModelPath())
-                                        } catch (e: Exception) {
-                                            downloadError = e.message
-                                        } finally {
-                                            isDownloading = false
-                                        }
-                                    }
-                                }
+                                onRetry = { startDownload() }
                             )
                         }
                         else -> {
@@ -93,55 +115,109 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+fun formatBytes(bytes: Long): String {
+    if (bytes < 1024) return "$bytes B"
+    val kb = bytes / 1024.0
+    if (kb < 1024) return "${DecimalFormat("#.##").format(kb)} KB"
+    val mb = kb / 1024.0
+    if (mb < 1024) return "${DecimalFormat("#.##").format(mb)} MB"
+    val gb = mb / 1024.0
+    return "${DecimalFormat("#.##").format(gb)} GB"
+}
+
 @Composable
-fun DownloadScreen(progress: Int) {
-    androidx.compose.foundation.layout.Column(
+fun DownloadScreen(progress: Int, bytesDownloaded: Long, totalBytes: Long) {
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        verticalArrangement = Arrangement.Center
     ) {
-        androidx.compose.material3.Text(
-            text = "Downloading model...",
-            style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
+        Text(
+            text = "Downloading Model",
+            style = MaterialTheme.typography.headlineMedium
         )
-        androidx.compose.foundation.layout.Spacer(
-            modifier = Modifier.height(16.dp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "This may take several minutes on first launch",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        androidx.compose.material3.LinearProgressIndicator(
+        Spacer(modifier = Modifier.height(24.dp))
+        LinearProgressIndicator(
             progress = { progress / 100f },
             modifier = Modifier.fillMaxWidth()
         )
-        androidx.compose.foundation.layout.Spacer(
-            modifier = Modifier.height(8.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "$progress%",
+            style = MaterialTheme.typography.titleLarge
         )
-        androidx.compose.material3.Text(text = "$progress%")
+        if (totalBytes > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Please keep the app open during download",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun LoadingModelScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Loading model...",
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "This may take a moment",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
 fun ErrorScreen(message: String, onRetry: () -> Unit) {
-    androidx.compose.foundation.layout.Column(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        verticalArrangement = Arrangement.Center
     ) {
-        androidx.compose.material3.Text(
-            text = "Download failed",
-            style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
+        Text(
+            text = "Download Failed",
+            style = MaterialTheme.typography.headlineMedium
         )
-        androidx.compose.foundation.layout.Spacer(
-            modifier = Modifier.height(8.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
         )
-        androidx.compose.material3.Text(text = message)
-        androidx.compose.foundation.layout.Spacer(
-            modifier = Modifier.height(16.dp)
-        )
-        androidx.compose.material3.Button(onClick = onRetry) {
-            androidx.compose.material3.Text("Retry")
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onRetry) {
+            Text("Retry Download")
         }
     }
 }
