@@ -146,7 +146,7 @@ fun DownloadScreen(progress: Int, bytesDownloaded: Long, totalBytes: Long) {
         )
         Spacer(modifier = Modifier.height(24.dp))
         LinearProgressIndicator(
-            progress = { progress / 100f },
+            progress = progress / 100f,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
