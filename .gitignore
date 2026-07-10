@@ -1,6 +1,5 @@
 .venv/
 __pycache__/
-instructions.txt
 models/
 android-app/.gradle/
 android-app/.idea/

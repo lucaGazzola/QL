@@ -58,6 +58,13 @@ android-app/
 - Download resumes if interrupted
 - Works on WiFi and mobile data
 - No special permissions required
+- 16KB page size compatible (Android 15+ ready)
+
+**Build Configuration:**
+- `compileSdk = 35`
+- `targetSdk = 35`
+- `minSdk = 26`
+- `ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES = TRUE` (16KB alignment)
 
 **User experience:**
 1. Install from Play Store
@@ -84,6 +91,7 @@ android-app/
 - JNI bindings fully integrated with llama.cpp API
 - Download with resume support tested
 - Progress display with bytes downloaded
+- 16KB page alignment verified for Android 15+ compatibility
 
 ## Journey Log
 
@@ -92,6 +100,8 @@ android-app/
 - [lesson] APK can be 50-100MB with llama.cpp, within Play Store limits
 - [lesson] First model load takes 10-30 seconds, subsequent loads are faster
 - [lesson] Download progress should show both percentage and bytes downloaded
+- [lesson] 16KB page alignment required for Android 15+ (API 35+) compatibility
+- [lesson] Use ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=TRUE CMake flag for proper alignment
 
 ## Source Materials
 

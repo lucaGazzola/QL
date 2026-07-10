@@ -1,6 +1,6 @@
 # QL Chat - Android
 
-A minimal Android chatbot powered by Qwen3.5-4B using llama.cpp.
+A native Android chatbot powered by Qwen3.5-4B using llama.cpp.
 
 ## Features
 
@@ -46,6 +46,7 @@ The app is ready for Play Store distribution. When you build the release APK:
 - Model download: ~2.5GB (happens after install)
 - Download resumes if interrupted
 - Works on WiFi and mobile data
+- 16KB page size compatible (Android 15+ ready)
 
 ## Model
 

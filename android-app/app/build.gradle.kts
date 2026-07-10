@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.ql.chat"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.ql.chat"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -21,7 +21,8 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
-                arguments += "-DANDROID_STL=c++_shared"
+                arguments += "-DANDROID_STL=c++_static"
+                arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=TRUE"
             }
         }
     }
@@ -51,6 +52,12 @@ android {
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.5"
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     externalNativeBuild {

@@ -4,6 +4,10 @@ project("ql-chat" VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+# Force 16KB page alignment for all shared libraries (required for Android 15+)
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
+
 # --------------------------------------------------------------------------
 # llama.cpp integration
 # --------------------------------------------------------------------------
