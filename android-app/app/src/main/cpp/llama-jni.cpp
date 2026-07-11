@@ -20,10 +20,10 @@
 
 // Constants
 constexpr int N_THREADS_MIN = 2;
-constexpr int N_THREADS_MAX = 4;
-constexpr int N_THREADS_HEADROOM = 2;
-constexpr int DEFAULT_CONTEXT_SIZE = 8192;
-constexpr int BATCH_SIZE = 512;
+constexpr int N_THREADS_MAX = 8;
+constexpr int N_THREADS_HEADROOM = 1;
+constexpr int DEFAULT_CONTEXT_SIZE = 2048;
+constexpr int BATCH_SIZE = 256;
 constexpr float DEFAULT_SAMPLER_TEMP = 0.7f;
 
 #if LLAMA_AVAILABLE
@@ -40,9 +40,10 @@ static llama_context *init_context(llama_model *model, int n_ctx = DEFAULT_CONTE
         return nullptr;
     }
 
+    const int n_cpus = (int)sysconf(_SC_NPROCESSORS_ONLN);
     const int n_threads = std::max(N_THREADS_MIN, std::min(N_THREADS_MAX,
-        (int)sysconf(_SC_NPROCESSORS_ONLN) - N_THREADS_HEADROOM));
-    LOGI("Using %d threads", n_threads);
+        n_cpus - N_THREADS_HEADROOM));
+    LOGI("Using %d threads (CPUs: %d)", n_threads, n_cpus);
 
     llama_context_params ctx_params = llama_context_default_params();
     ctx_params.n_ctx = n_ctx;
@@ -112,7 +113,6 @@ Java_com_ql_chat_LlamaEngine_nativeInit(
     g_initialized = true;
     LOGI("Engine initialized successfully");
 
-    env->ReleaseStringUTFChars(model_path, path);
     return reinterpret_cast<jlong>(g_context);
 #else
     env->ReleaseStringUTFChars(model_path, path);
@@ -173,7 +173,8 @@ Java_com_ql_chat_LlamaEngine_nativeGenerate(
         common_batch_clear(g_batch);
 
         for (int j = 0; j < batch_size; j++) {
-            common_batch_add(g_batch, tokens[i + j], i + j, {0}, false);
+            bool is_last_input = (i + j + 1 >= (int)tokens.size());
+            common_batch_add(g_batch, tokens[i + j], i + j, {0}, is_last_input);
         }
 
         if (llama_decode(g_context, g_batch) != 0) {
@@ -187,6 +188,8 @@ Java_com_ql_chat_LlamaEngine_nativeGenerate(
     llama_pos start_pos = tokens.size();
 
     for (int i = 0; i < max_tokens; i++) {
+        LOGI("Generating token %d...", i);
+
         // Sample next token
         auto new_token_id = common_sampler_sample(g_sampler, g_context, -1);
         common_sampler_accept(g_sampler, new_token_id, true);
@@ -208,6 +211,10 @@ Java_com_ql_chat_LlamaEngine_nativeGenerate(
         if (llama_decode(g_context, g_batch) != 0) {
             LOGE("llama_decode failed during generation");
             break;
+        }
+
+        if ((i + 1) % 5 == 0) {
+            LOGI("Generated %d tokens so far", i + 1);
         }
     }
 

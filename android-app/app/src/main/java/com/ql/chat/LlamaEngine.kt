@@ -12,7 +12,7 @@ class LlamaEngine {
 
     private var handle: Long = 0L
 
-    fun init(modelPath: String, nCtx: Int = 4096) {
+    fun init(modelPath: String, nCtx: Int = 2048) {
         handle = nativeInit(modelPath, nCtx)
         if (handle == 0L) {
             throw IllegalStateException("Failed to initialize LLM engine")

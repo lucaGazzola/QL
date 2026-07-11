@@ -35,6 +35,7 @@ if(EXISTS "${LLAMA_SRC}/CMakeLists.txt")
         endif()
     endif()
 
+    set(LLAMA_BUILD_COMMON ON CACHE BOOL "" FORCE)
     add_subdirectory(${LLAMA_SRC} build-llama)
 
     add_library(ql-jni SHARED llama-jni.cpp)
