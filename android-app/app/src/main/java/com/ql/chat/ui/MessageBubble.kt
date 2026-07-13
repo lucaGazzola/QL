@@ -19,36 +19,57 @@ fun MessageBubble(
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == "user"
-    val bubbleColor = if (isUser) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-    val textColor = if (isUser) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val alignment = if (isUser) Alignment.End else Alignment.Start
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalAlignment = alignment
+            .padding(horizontal = 12.dp, vertical = 5.dp),
+        horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 300.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(bubbleColor)
-                .padding(12.dp)
-        ) {
-            Text(
-                text = message.content,
-                color = textColor,
-                fontSize = 16.sp
-            )
+        if (isUser) {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 20.dp,
+                            topEnd = 20.dp,
+                            bottomStart = 20.dp,
+                            bottomEnd = 4.dp
+                        )
+                    )
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = message.content,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 4.dp,
+                            topEnd = 20.dp,
+                            bottomStart = 20.dp,
+                            bottomEnd = 20.dp
+                        )
+                    )
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = message.content,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp
+                )
+            }
         }
     }
 }

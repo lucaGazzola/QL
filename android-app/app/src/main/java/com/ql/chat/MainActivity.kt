@@ -3,6 +3,7 @@ package com.ql.chat
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ql.chat.ui.ChatScreen
+import com.ql.chat.ui.theme.QLTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         val modelsDir = File(filesDir, "models")
         val modelManager = ModelManager(modelsDir)
@@ -49,7 +52,6 @@ class MainActivity : ComponentActivity() {
                                 totalBytes = total
                             }
                         }
-                        // Model downloaded, now load it
                         isLoadingModel = true
                         withContext(Dispatchers.IO) {
                             viewModel.initEngine(modelManager.getModelPath())
@@ -77,37 +79,25 @@ class MainActivity : ComponentActivity() {
                             isLoadingModel = false
                         }
                     }
-                    ModelManager.DownloadState.IN_PROGRESS -> {
-                        startDownload()
-                    }
-                    ModelManager.DownloadState.NOT_STARTED -> {
-                        startDownload()
-                    }
+                    ModelManager.DownloadState.IN_PROGRESS,
+                    ModelManager.DownloadState.NOT_STARTED -> startDownload()
                 }
             }
 
-            MaterialTheme {
-                Surface {
+            QLTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     when {
-                        isDownloading -> {
-                            DownloadScreen(
-                                progress = downloadProgress,
-                                bytesDownloaded = bytesDownloaded,
-                                totalBytes = totalBytes
-                            )
-                        }
-                        isLoadingModel -> {
-                            LoadingModelScreen()
-                        }
-                        downloadError != null -> {
-                            ErrorScreen(
-                                message = downloadError ?: "Unknown error",
-                                onRetry = { startDownload() }
-                            )
-                        }
-                        else -> {
-                            ChatScreen(viewModel = viewModel)
-                        }
+                        isDownloading -> DownloadScreen(
+                            progress = downloadProgress,
+                            bytesDownloaded = bytesDownloaded,
+                            totalBytes = totalBytes
+                        )
+                        isLoadingModel -> LoadingModelScreen()
+                        downloadError != null -> ErrorScreen(
+                            message = downloadError ?: "Unknown error",
+                            onRetry = { startDownload() }
+                        )
+                        else -> ChatScreen(viewModel = viewModel)
                     }
                 }
             }
@@ -115,7 +105,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun formatBytes(bytes: Long): String {
+private fun formatBytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
     val kb = bytes / 1024.0
     if (kb < 1024) return "${DecimalFormat("#.##").format(kb)} KB"
@@ -126,97 +116,129 @@ fun formatBytes(bytes: Long): String {
 }
 
 @Composable
-fun DownloadScreen(progress: Int, bytesDownloaded: Long, totalBytes: Long) {
+private fun DownloadScreen(progress: Int, bytesDownloaded: Long, totalBytes: Long) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(48.dp)
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Downloading Model",
-            style = MaterialTheme.typography.headlineMedium
+            text = "QL",
+            style = MaterialTheme.typography.displayLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Downloading model\u2026",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "This may take several minutes on first launch",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(40.dp))
         LinearProgressIndicator(
             progress = progress / 100f,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "$progress%",
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary
         )
         if (totalBytes > 0) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
+    }
+}
+
+@Composable
+private fun LoadingModelScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(48.dp)
+            .statusBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "QL",
+            style = MaterialTheme.typography.displayLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        CircularProgressIndicator(
+            modifier = Modifier.size(32.dp),
+            strokeWidth = 2.5.dp,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Loading model\u2026",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "This may take a moment",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        )
+    }
+}
+
+@Composable
+private fun ErrorScreen(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(48.dp)
+            .statusBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "QL",
+            style = MaterialTheme.typography.displayLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Please keep the app open during download",
+            text = "Something went wrong",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = message,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-    }
-}
-
-@Composable
-fun LoadingModelScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Loading model...",
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "This may take a moment",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-fun ErrorScreen(message: String, onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Download Failed",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onRetry) {
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
             Text("Retry Download")
         }
     }

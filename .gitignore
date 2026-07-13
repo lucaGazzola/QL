@@ -9,3 +9,4 @@ android-app/app/.cxx/
 android-app/app/build/
 android-app/llama.cpp/
 docs/
+*DS_Store
